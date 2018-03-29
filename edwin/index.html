@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+
+    
+
+    
+
+
+
+    <meta charset="utf-8">
+    
+    
+    
+    <title>深入理解java this关键字 | Edwin&#39;s Blog | 网站副标题</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    
+    <meta name="theme-color" content="#3F51B5">
+    
+    
+    <meta name="keywords" content="">
+    <meta name="description" content="#1 从字节码文件看this当我们在方法内部使用this调用属性、方法的时候，你有没有考过this是怎么来的？作为引用变量，this的数据类型是什么？我们在源码中书写的this，编译成字节码文件后变成了什么？jvm又是如何处理this的呢？想弄清楚这几个问题，不懂点儿编译知识和JVM怕是不行的。 1. 字节码分析众所周知，java源码”.java”首先会被编译为字节码文件”.class”。而我们最">
+<meta property="og:type" content="website">
+<meta property="og:title" content="深入理解java this关键字">
+<meta property="og:url" content="https://wywncdx.github.io/edwin/index.html">
+<meta property="og:site_name" content="Edwin&#39;s Blog">
+<meta property="og:description" content="#1 从字节码文件看this当我们在方法内部使用this调用属性、方法的时候，你有没有考过this是怎么来的？作为引用变量，this的数据类型是什么？我们在源码中书写的this，编译成字节码文件后变成了什么？jvm又是如何处理this的呢？想弄清楚这几个问题，不懂点儿编译知识和JVM怕是不行的。 1. 字节码分析众所周知，java源码”.java”首先会被编译为字节码文件”.class”。而我们最">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2018-03-29T09:44:17.978Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="深入理解java this关键字">
+<meta name="twitter:description" content="#1 从字节码文件看this当我们在方法内部使用this调用属性、方法的时候，你有没有考过this是怎么来的？作为引用变量，this的数据类型是什么？我们在源码中书写的this，编译成字节码文件后变成了什么？jvm又是如何处理this的呢？想弄清楚这几个问题，不懂点儿编译知识和JVM怕是不行的。 1. 字节码分析众所周知，java源码”.java”首先会被编译为字节码文件”.class”。而我们最">
+    
+        <link rel="alternate" type="application/atom+xml" title="Edwin&#39;s Blog" href="/atom.xml">
+    
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="stylesheet" href="//unpkg.com/hexo-theme-material-indigo@latest/css/style.css">
+    <script>window.lazyScripts=[]</script>
+
+    <!-- custom head -->
+    
+
+</head>
+
+<body>
+    <div id="loading" class="active"></div>
+
+    <aside id="menu" class="hide" >
+  <div class="inner flex-row-vertical">
+    <a href="javascript:;" class="header-icon waves-effect waves-circle waves-light" id="menu-off">
+        <i class="icon icon-lg icon-close"></i>
+    </a>
+    <div class="brand-wrap" style="background-image:url(/img/brand.jpg)">
+      <div class="brand">
+        <a href="/" class="avatar waves-effect waves-circle waves-light">
+          <img src="/img/avatar.jpg">
+        </a>
+        <hgroup class="introduce">
+          <h5 class="nickname">Edwin</h5>
+          <a href="mailto:wywncdx@qq.com" title="wywncdx@qq.com" class="mail">wywncdx@qq.com</a>
+        </hgroup>
+      </div>
+    </div>
+    <div class="scroll-wrap flex-col">
+      <ul class="nav">
+        
+            <li class="waves-block waves-effect">
+              <a href="/"  >
+                <i class="icon icon-lg icon-home"></i>
+                主页
+              </a>
+            </li>
+        
+            <li class="waves-block waves-effect">
+              <a href="/archives"  >
+                <i class="icon icon-lg icon-archives"></i>
+                归档
+              </a>
+            </li>
+        
+            <li class="waves-block waves-effect">
+              <a href="/tags"  >
+                <i class="icon icon-lg icon-tags"></i>
+                标签
+              </a>
+            </li>
+        
+            <li class="waves-block waves-effect">
+              <a href="/categories"  >
+                <i class="icon icon-lg icon-th-list"></i>
+                分类
+              </a>
+            </li>
+        
+            <li class="waves-block waves-effect">
+              <a href="https://github.com/wywncdx" target="_blank" >
+                <i class="icon icon-lg icon-github"></i>
+                Github
+              </a>
+            </li>
+        
+      </ul>
+    </div>
+  </div>
+</aside>
+
+    <main id="main">
+        <header class="top-header" id="header">
+    <div class="flex-row">
+        <a href="javascript:;" class="header-icon waves-effect waves-circle waves-light on" id="menu-toggle">
+          <i class="icon icon-lg icon-navicon"></i>
+        </a>
+        <div class="flex-col header-title ellipsis">深入理解java this关键字</div>
+        
+        <div class="search-wrap" id="search-wrap">
+            <a href="javascript:;" class="header-icon waves-effect waves-circle waves-light" id="back">
+                <i class="icon icon-lg icon-chevron-left"></i>
+            </a>
+            <input type="text" id="key" class="search-input" autocomplete="off" placeholder="输入感兴趣的关键字">
+            <a href="javascript:;" class="header-icon waves-effect waves-circle waves-light" id="search">
+                <i class="icon icon-lg icon-search"></i>
+            </a>
+        </div>
+        
+        
+        <a href="javascript:;" class="header-icon waves-effect waves-circle waves-light" id="menuShare">
+            <i class="icon icon-lg icon-share-alt"></i>
+        </a>
+        
+    </div>
+</header>
+<header class="content-header page-header">
+
+    <div class="container fade-scale">
+        <h1 class="title">深入理解java this关键字</h1>
+        <h5 class="subtitle">
+            
+        </h5>
+    </div>
+
+    
+
+
+</header>
+
+
+<div class="container body-wrap">
+    <article class="page-article fade" itemprop="blogPage">
+        <div class="post-content page-content" id="page-content" itemprop="pageContent">
+            <p>#1 从字节码文件看this<br>当我们在方法内部使用this调用属性、方法的时候，你有没有考过this是怎么来的？作为引用变量，this的数据类型是什么？我们在源码中书写的this，编译成字节码文件后变成了什么？jvm又是如何处理this的呢？想弄清楚这几个问题，不懂点儿编译知识和JVM怕是不行的。</p>
+<h2 id="1-字节码分析"><a href="#1-字节码分析" class="headerlink" title="1. 字节码分析"></a>1. 字节码分析</h2><p>众所周知，java源码”.java”首先会被编译为字节码文件”.class”。而我们最常用的java编译器就是jdk自带的javac。</p>
+<p>看如下代码，我们对其生成的字节码进行必要分析：</p>
+<p><em>示例</em><br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> test;</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Base</span> </span>&#123;</span><br><span class="line">    <span class="keyword">public</span> String name = <span class="string">"I am Base"</span>;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">instanceMethod</span><span class="params">(String str1)</span></span>&#123;</span><br><span class="line">        <span class="comment">//do something</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">classMethod</span><span class="params">(String str2)</span> </span>&#123;</span><br><span class="line">        <span class="comment">//do something</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>上述代码编译后，我们在字节码所在文件夹中执行如下命令：<br><code>javac -verbose Base</code><br>编译后的字节码如下（只截取了一部分）：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">public java.lang.String name;</span><br><span class="line">  flags: ACC_PUBLIC</span><br><span class="line"></span><br><span class="line">test.Base();</span><br><span class="line">  flags:</span><br><span class="line">  Code:</span><br><span class="line">    stack=2, locals=1, args_size=1</span><br><span class="line">       0: aload_0</span><br><span class="line">       1: invokespecial #1                  // Method java/lang/Object.&quot;&lt;init&gt;&quot;:()V</span><br><span class="line">       4: aload_0</span><br><span class="line">       5: ldc           #2                  // String I am Base</span><br><span class="line">       7: putfield      #3                  // Field name:Ljava/lang/String;</span><br><span class="line">      10: return</span><br><span class="line">    LineNumberTable:</span><br><span class="line">      line 8: 0</span><br><span class="line">      line 9: 4</span><br><span class="line">    LocalVariableTable:</span><br><span class="line">      Start  Length  Slot  Name   Signature</span><br><span class="line">          0      11     0  this   Ltest/Base;</span><br><span class="line"></span><br><span class="line">void instanceMethod(java.lang.String);</span><br><span class="line">  flags:</span><br><span class="line">  Code:</span><br><span class="line">    stack=0, locals=2, args_size=2</span><br><span class="line">       0: return</span><br><span class="line">    LineNumberTable:</span><br><span class="line">      line 13: 0</span><br><span class="line">    LocalVariableTable:</span><br><span class="line">      Start  Length  Slot  Name   Signature</span><br><span class="line">          0       1     0  this   Ltest/Base;</span><br><span class="line">          0       1     1  str1   Ljava/lang/String;</span><br><span class="line"></span><br><span class="line">static void classMethod(java.lang.String);</span><br><span class="line">  flags: ACC_STATIC</span><br><span class="line">  Code:</span><br><span class="line">    stack=0, locals=1, args_size=1</span><br><span class="line">       0: return</span><br><span class="line">    LineNumberTable:</span><br><span class="line">      line 17: 0</span><br><span class="line">    LocalVariableTable:</span><br><span class="line">      Start  Length  Slot  Name   Signature</span><br><span class="line">          0       1     0  str2   Ljava/lang/String;</span><br></pre></td></tr></table></figure></p>
+<p>##2 字节码分析：</p>
+<ul>
+<li>1行：定义了一个String类型的实例变量name，注意只是定义，并没有赋值。默认为null。</li>
+<li>2行：name变量的访问控制符，没有表示默认访问权限。</li>
+<li>4-19行：Base类的默认的构造方法。因为我们并没有显式的定义constructor，所以编译器会生成一个默认的无参constructor，和我们手动定义一个方法体为空的无参构造方法效果完全一样。<br>其中7-13行是构造方法的代码区域；第17-19行描述的是Java源码中定义的局部变量与该方法被执行时栈帧中的局部变量表中的变量的对应关系。<strong>重点来了，第7行args_size=1，说明构造方法有一个参数，那我们就看下第17-19行的LocalVariableTbale中这个参数到底是什么。我们发现，这个唯一的局部变量就是this！且其静态类型为Base！：</strong><br>10-12行，是给实例变量name进行初始化赋值。即实例变量的初始赋值操作，是在构造方法中进行的。</li>
+<li>21-31行：instanceMethod实例方法。同样我们看到字节码文件中却有两个参数，args_size=2，第一个参数是this，且参数的静态类型为Base！</li>
+<li>33-39行：classMethod静态方法，属于类的。我们可以明确的看到args_size=1，即只有我们自己定义的参数str2。<strong>类方法（静态方法）中，并没有this局部变量！当然，我们也就无法在类方法中使用this关键字了！</strong></li>
+</ul>
+<blockquote>
+<p>上述示例，总结如下：</p>
+<ol>
+<li>构造方法、实例方法的第一个参数是this！这是由编译器自动添加的。</li>
+<li>this引用变量的数据类型是，this所在方法的所属类。即，编码时，this出现在哪个类中，this的数据类型就是这个类。</li>
+<li>既然编译器会自动给实例方法添加一个this参数，那么就不难理解，当调用某个实例对象的方法时，编译器会将该实例对象当做参数传递到调用方法中了。</li>
+</ol>
+</blockquote>
+<p>##3 假如编译器不自动添加this参数……<br>既然第一个参数是编译器自动添加的this。那么，为了更好的理解，我们就假设，如果编译器不给我们添加this参数，我们自己写的话应该怎么写呢？模拟如下（不可能通过编译的，只是为了理解）：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Base</span> </span>&#123;</span><br><span class="line">	<span class="keyword">public</span> String name = <span class="string">"I am Base"</span>;</span><br><span class="line"></span><br><span class="line">	<span class="comment">//假设编译器不会自动添加this参数，实例方法需要手动添加this参数，参数类型为方法所在类</span></span><br><span class="line">	<span class="function"><span class="keyword">void</span> <span class="title">instanceMethod</span><span class="params">(Base <span class="keyword">this</span>, String str1)</span> </span>&#123;</span><br><span class="line">		<span class="comment">//do something</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="comment">//静态方法，无this参数</span></span><br><span class="line">	<span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">classMethod</span><span class="params">(String str2)</span> </span>&#123;</span><br><span class="line">		<span class="comment">//do something</span></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">		<span class="comment">//定义一个静态类型为Base的引用变量b，生成一个Base对象，并将其引用赋值给变量b</span></span><br><span class="line">		Base b = <span class="keyword">new</span> Base();</span><br><span class="line">		<span class="comment">//引用变量b调用实例方法，该方法接受两个参数，其中第一个就是引用变量b本身</span></span><br><span class="line">		b.instanceMethod(b, <span class="string">"str1"</span>);</span><br><span class="line">		<span class="comment">//引用变量b调用类方法，类方法没有this参数，所以不需要传递引用变量b本身</span></span><br><span class="line">		b.classMethod(<span class="string">"str2"</span>);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>我想，这会儿大家应该知道，在方法体内部使用的this，是怎么来的了吧。<br>this其实就是通过方法体的第一个参数传递过来的，它指代调用该方法的对象。通过这个例子应该能够更加直观具体的体会this的含义了。</p>
+<p>#2. this的本质</p>
+<ol>
+<li><strong>实例方法中（非构造非静态）：this指代的是正在调用当前方法的对象</strong></li>
+<li><strong>构造方法中：this指代的是正在new的对象本身</strong></li>
+</ol>
+<blockquote>
+<p>关键点：</p>
+</blockquote>
+<blockquote>
+<ol>
+<li>this指代的一定是对象，是jvm堆中的某个class的实例对象的引用；this代表的不是class或者其他。</li>
+<li>this出现的位置一般是在方法体内部（包括方法参数位置），假设this在methodA中出现，那么this指代的就是正在调用methodA的那个对象；即便this出现在方法体外部。如，假设在class A 中定义成员变量 A a = this; 最终这行代码仍然会被放入class A 的到构造函数中执行。</li>
+<li>为了便于理解，对this在普通方法和构造方法中进行了区分。其实，构造方法的真正功能是对对象进行初始化。<br>实际上，在jvm层面上，在执行构造方法之前，jvm已经为在堆中给对象分配好了内存空间，并将该对象的引用当做参数传递到构造方法中，构造方法的执行，只是为了给对象进行初始化。所以，我们仍然可以按照第一条表述来理解，即，构造方法是由新创建的对象来调用的，构造方法中的this，仍然指代的是正在调用该构造方法的对象。</li>
+<li>静态方法以及静态代码块中，不能使用this。原因很简单，从逻辑上讲，静态方法是可以直接通过类名进行调用的，根本就没有实例对象，所以在静态方法中，不能使用this；静态代码块，是在jvm第一次加载该类时执行的，此时更不会有实例对象，所以this也不能出现在静态代码块中。从java语法上讲，静态方法的参数列表中是没有this参数的。</li>
+</ol>
+</blockquote>
+<p>至此，关于什么是this就已经讲清楚了。看似简单，但是，在使用this调用实例变量、方法，特别是存在继承关系时，会出现很多令人不解的语法现象。要彻底理解这些问题，还需要其他的一些java底层知识作为支撑。后续博客我会继续讲解。</p>
+
+        </div>
+
+        
+        <div class="card page-about-me flex-row">
+            <a href="/" class="avatar waves-effect waves-circle waves-light"><img src="/img/avatar.jpg"></a>
+            <div class="content flex-col">
+                <p><strong>Edwin</strong></p>
+                <p><em>网站副标题</em></p>
+                <p>用户页面中作者相关的描述性文字，如不需要设为 false</p>
+            </div>
+
+            
+<div class="page-share-wrap">
+    
+
+<div class="page-share" id="pageShare">
+    <ul class="reset share-icons">
+      <li>
+        <a class="weibo share-sns" target="_blank" href="http://service.weibo.com/share/share.php?url=https://wywncdx.github.io/edwin/&title=《深入理解java this关键字》 — Edwin's Blog&pic=https://wywncdx.github.io/img/avatar.jpg" data-title="微博">
+          <i class="icon icon-weibo"></i>
+        </a>
+      </li>
+      <li>
+        <a class="weixin share-sns wxFab" href="javascript:;" data-title="微信">
+          <i class="icon icon-weixin"></i>
+        </a>
+      </li>
+      <li>
+        <a class="qq share-sns" target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=https://wywncdx.github.io/edwin/&title=《深入理解java this关键字》 — Edwin's Blog&source=网站描述" data-title=" QQ">
+          <i class="icon icon-qq"></i>
+        </a>
+      </li>
+      <li>
+        <a class="facebook share-sns" target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https://wywncdx.github.io/edwin/" data-title=" Facebook">
+          <i class="icon icon-facebook"></i>
+        </a>
+      </li>
+      <li>
+        <a class="twitter share-sns" target="_blank" href="https://twitter.com/intent/tweet?text=《深入理解java this关键字》 — Edwin's Blog&url=https://wywncdx.github.io/edwin/&via=https://wywncdx.github.io" data-title=" Twitter">
+          <i class="icon icon-twitter"></i>
+        </a>
+      </li>
+      <li>
+        <a class="google share-sns" target="_blank" href="https://plus.google.com/share?url=https://wywncdx.github.io/edwin/" data-title=" Google+">
+          <i class="icon icon-google-plus"></i>
+        </a>
+      </li>
+    </ul>
+ </div>
+
+
+
+    <a href="javascript:;" id="shareFab" class="page-share-fab waves-effect waves-circle">
+        <i class="icon icon-share-alt icon-lg"></i>
+    </a>
+</div>
+
+
+
+        </div>
+        
+
+        
+<div class="page-reward">
+    <a id="rewardBtn" href="javascript:;" class="page-reward-btn waves-effect waves-circle waves-light">赏</a>
+</div>
+
+
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    </article>
+    
+<div id="reward" class="page-modal reward-lay">
+    <a class="close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <h3 class="reward-title">
+        <i class="icon icon-quote-left"></i>
+        谢谢大爷~
+        <i class="icon icon-quote-right"></i>
+    </h3>
+    <div class="reward-content">
+        
+        <div class="reward-code">
+            <img id="rewardCode" src="/img/wechat.jpg" alt="打赏二维码">
+        </div>
+        
+        <label class="reward-toggle">
+            <input id="rewardToggle" type="checkbox" class="reward-toggle-check"
+                data-wechat="/img/wechat.jpg" data-alipay="/img/alipay.jpg">
+            <div class="reward-toggle-ctrol">
+                <span class="reward-toggle-item wechat">微信</span>
+                <span class="reward-toggle-label"></span>
+                <span class="reward-toggle-item alipay">支付宝</span>
+            </div>
+        </label>
+        
+    </div>
+</div>
+
+
+</div>
+
+        <footer class="footer">
+    <div class="top">
+        
+<p>
+    <span id="busuanzi_container_site_uv" style='display:none'>
+        站点总访客数：<span id="busuanzi_value_site_uv"></span>
+    </span>
+    <span id="busuanzi_container_site_pv" style='display:none'>
+        站点总访问量：<span id="busuanzi_value_site_pv"></span>
+    </span>
+</p>
+
+
+        <p>
+            
+                <span><a href="/atom.xml" target="_blank" class="rss" title="rss"><i class="icon icon-lg icon-rss"></i></a></span>
+            
+            <span>博客内容遵循 <a rel="license" href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh">知识共享 署名 - 非商业性 - 相同方式共享 4.0 国际协议</a></span>
+        </p>
+    </div>
+    <div class="bottom">
+        <p><span>Edwin &copy; 2015 - 2018</span>
+            <span>
+                
+                Power by <a href="http://hexo.io/" target="_blank">Hexo</a> Theme <a href="https://github.com/yscoder/hexo-theme-indigo" target="_blank">indigo</a>
+            </span>
+        </p>
+    </div>
+</footer>
+
+    </main>
+    <div class="mask" id="mask"></div>
+<a href="javascript:;" id="gotop" class="waves-effect waves-circle waves-light"><span class="icon icon-lg icon-chevron-up"></span></a>
+
+
+
+<div class="global-share" id="globalShare">
+    <ul class="reset share-icons">
+      <li>
+        <a class="weibo share-sns" target="_blank" href="http://service.weibo.com/share/share.php?url=https://wywncdx.github.io/edwin/&title=《深入理解java this关键字》 — Edwin's Blog&pic=https://wywncdx.github.io/img/avatar.jpg" data-title="微博">
+          <i class="icon icon-weibo"></i>
+        </a>
+      </li>
+      <li>
+        <a class="weixin share-sns wxFab" href="javascript:;" data-title="微信">
+          <i class="icon icon-weixin"></i>
+        </a>
+      </li>
+      <li>
+        <a class="qq share-sns" target="_blank" href="http://connect.qq.com/widget/shareqq/index.html?url=https://wywncdx.github.io/edwin/&title=《深入理解java this关键字》 — Edwin's Blog&source=网站描述" data-title=" QQ">
+          <i class="icon icon-qq"></i>
+        </a>
+      </li>
+      <li>
+        <a class="facebook share-sns" target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https://wywncdx.github.io/edwin/" data-title=" Facebook">
+          <i class="icon icon-facebook"></i>
+        </a>
+      </li>
+      <li>
+        <a class="twitter share-sns" target="_blank" href="https://twitter.com/intent/tweet?text=《深入理解java this关键字》 — Edwin's Blog&url=https://wywncdx.github.io/edwin/&via=https://wywncdx.github.io" data-title=" Twitter">
+          <i class="icon icon-twitter"></i>
+        </a>
+      </li>
+      <li>
+        <a class="google share-sns" target="_blank" href="https://plus.google.com/share?url=https://wywncdx.github.io/edwin/" data-title=" Google+">
+          <i class="icon icon-google-plus"></i>
+        </a>
+      </li>
+    </ul>
+ </div>
+
+
+<div class="page-modal wx-share" id="wxShare">
+    <a class="close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAK4AAACuCAAAAACKZ2kyAAAByklEQVR42u3aUa6DMAwEwN7/0rwD8EjXcRJRafiqKkQGPix7k88nvq7bldyZPPOz48LFxW1zr+F1f/T995h4///p+WMDLi7uee54mfFrPIGqz4+KHS4u7ou5eROTFzJcXNxf5OZLJk0PLi7u+7nJ8FONRZIX3jir4eLiNrh5Srnv95Z8FxcXd4p7TV1JaauORtG6uLi4R7jVolMl5k3MeHDCxcU9yc0XyGPQpFTlQcnjd8XFxT3ITRqUTizSOcaBi4t7hluNTTugzjbMZMqLi4u7iJsv0z+cMbftiouLu5ubNyt5U5IXvmXDDy4u7jZuHohUKclRraiY4uLiHuHOFZS5F+sc5PqS6+Di4i7lVln9mDVpdAp1FxcXdxs3jzkKx6emPseXgoiLi3uE24lKq3fObdUsS3ZxcXFjbucgRecIRbVh+mf4wcXF3catbpB0ItFOUIKLi3uSu3awWbX5GqW5uLi427j9g1N5G5S/8AI0Li5um5sUr2qEkdw5VyhxcXFPcqvhRbU1ScanKF7BxcV9Gbc6AiXhSHn4wcXFfRk3X7gaixQKHy4u7kHu3PBTLVvVyHXxrIaLixtz88C0v7uxY1MWFxd3KfcPC7WfZq2Rk+YAAAAASUVORK5CYII=" alt="微信分享二维码">
+</div>
+
+
+
+
+    <script src="//cdn.bootcss.com/node-waves/0.7.4/waves.min.js"></script>
+<script>
+var BLOG = { ROOT: '/', SHARE: true, REWARD: true };
+
+
+</script>
+
+<script src="//unpkg.com/hexo-theme-material-indigo@latest/js/main.min.js"></script>
+
+
+<div class="search-panel" id="search-panel">
+    <ul class="search-result" id="search-result"></ul>
+</div>
+<template id="search-tpl">
+<li class="item">
+    <a href="{path}" class="waves-block waves-effect">
+        <div class="title ellipsis" title="{title}">{title}</div>
+        <div class="flex-row flex-middle">
+            <div class="tags ellipsis">
+                {tags}
+            </div>
+            <time class="flex-col time">{date}</time>
+        </div>
+    </a>
+</li>
+</template>
+
+<script src="//unpkg.com/hexo-theme-material-indigo@latest/js/search.min.js" async></script>
+
+
+
+
+
+
+<script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+<script>
+(function() {
+    var OriginTitile = document.title, titleTime;
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            document.title = '死鬼去哪里了！';
+            clearTimeout(titleTime);
+        } else {
+            document.title = '(つェ⊂)咦!又好了!';
+            titleTime = setTimeout(function() {
+                document.title = OriginTitile;
+            },2000);
+        }
+    });
+})();
+</script>
+
+
+
+</body>
+</html>
